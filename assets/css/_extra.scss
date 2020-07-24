@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+body {
+  font-family: 'Quicksand', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: $lightest-color;
+  font-weight: 400;
+}
+
+.app-header {
+  .nav {
+    .nav-item {
+      position: relative;
+      span {
+        position: absolute;
+        left: -1.2rem;
+      }
+      &.active {
+        color: $lightest-color;
+      }
+    }
+  }
+  @media (max-width: 939px) {
+    .nav {
+      display: none;
+    }
+  }
+}
+
+.app-container {
+  .nav {
+    .nav-item {
+      &.active {
+        color: $lightest-color;
+      }
+      margin: 0 .4em;
+    }
+  }
+  .hero {
+    margin-bottom: 2em;
+    .bullet-points {
+      padding-left: 1.5em;
+    }
+    .tools {
+      img {
+        height: 1.5em;
+        margin: 0 .5em;
+      }
+    }
+  }
+  .recent-blog-posts {
+    .blog, .microblog {
+      margin-top: 3em;
+    }
+    @media (min-width: 940px) {
+      display: flex;
+      .blog {
+        flex: 3;
+      }
+      .microblog {
+        flex: 1;
+        padding-left: 2em;
+      }
+    }
+  }
+}
+
+.app-header-avatar {
+  max-width: 7rem;
+  max-height: 7rem;
+  border: 0.1rem solid $lightest-color;
+}
+
+.app-header-social {
+  font-size: 1.5em;
+  .icons {
+    width: 1.1em;
+  }
+}
+
+pre {
+  padding-top: .75em;
+  padding-bottom: .75em;
+}

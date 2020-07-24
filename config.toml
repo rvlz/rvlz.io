@@ -1,0 +1,78 @@
+baseURL = "http://rvlz.io"
+title = "Ricardo Veloz"
+theme = "m10c"
+paginate = 7
+sectionPagesMenu = "main"
+summaryLength = 30
+enableRobotsTXT = true
+
+[menu]
+  [[menu.main]]
+    identifier = "home"
+    name = "home"
+    title = "home"
+    url = "/"
+    weight = -1
+  [[menu.main]]
+    identifier = "blog"
+    name = "blog"
+    title = "blog"
+    url = "/blog/"
+    weight = 1
+  [[menu.main]]
+    identifier = "tutoring"
+    name = "tutoring"
+    title = "tutoring"
+    url = "/tutoring/"
+    weight = 2
+  [[menu.main]]
+    identifier = "about"
+    name = "about"
+    title = "about"
+    url = "/about/"
+    weight = 3
+  [[menu.main]]
+    identifier = "micro"
+    name = "micro"
+    title = "micro"
+    url = "/micro/"
+    weight = 4
+  [[menu.main]]
+    identifier = "contact"
+    name = "contact"
+    title = "contact"
+    url = "/contact/"
+    weight = 5
+
+[params]
+  author = "Ricardo Veloz"
+  description = "Software || Math || Tutoring"
+  avatar = "./images/avatar.jpg"
+  email = "ricardo@rvlz.io"
+  [[params.social]]
+    name = "git"
+    url = "https://github.com/rvlz"
+  [[params.social]]
+    name = "twitter"
+    url = "https://twitter.com/rvlzio"
+  [[params.social]]
+    name = "linkedin"
+    url = "https://www.linkedin.com/in/ricardo-veloz-11202a19b/"
+  [params.style]
+   darkestColor = "#222831"
+   darkColor = "#393e46"
+   primaryColor = "#98ccd3"
+   lightColor = "#eeeeee"
+   lightestColor = "#eeeeee"
+  
+  [params.microblog]
+    number = 4
+
+[taxonomies]
+tag = "tags"
+
+[deployment]
+
+[[deployment.targets]]
+name = "aws.personal"
+URL = "s3://rvlz.io?region=us-east-1"

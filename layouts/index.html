@@ -1,0 +1,59 @@
+{{ define "main" }}
+<div class="hero">
+  <h1>Welcome! 👋</h1>
+  <ul class="bullet-points">
+    <li>
+      <p class="intro">My name's Ricardo. I write software, and I also tutor.</p>
+    </li>
+    <li>
+      <p class="tools">Tools of the trade
+        <img src="/images/python.png" alt="python">
+        <img src="/images/docker.png" alt="docker">
+        <img src="/images/aws.png" alt="docker">
+      </p>
+    </li>
+  </ul>
+</div>
+<!-- only show section if at least one blog post -->
+{{ $blogposts := (where .Site.RegularPages "Section" "==" "blog") }}
+{{ if ge (len $blogposts) 1 }}
+
+<div class="recent-blog-posts">
+  <div class="blog">
+    <h2>Recent blog posts</h2>
+    <!-- Loop through all posts filtered by type "article" -->
+    {{ $paginator := .Paginate (where .Site.RegularPages.ByDate.Reverse "Section" "==" "blog") }}
+    {{ range first 3 .Paginator.Pages }}
+    <article>
+        <!-- Article Title -->
+        <h3 class="title">
+            <a href="{{ .Permalink }}">{{ .Title }}</a>
+        </h3>
+
+        <div class="content">
+            <!-- Article Summary -->
+            {{ .Summary | plainify | safeHTML }}
+            <!-- "Read More" Button-->
+            <a class="button is-link" href="{{ .Permalink }}" style="height:28px">read more</a>
+        </div>
+    </article>
+    <!-- End loop -->
+    {{ end }}
+  </div>
+  <div class="microblog">
+    {{ $microposts := (where .Site.RegularPages "Section" "==" "micro") }}
+    {{ if ge (len $microposts) 1 }}
+        <h3><a href="/micro">Microblog</a></h3>
+        <!-- show "number" of latest "micro" type articles -->
+        {{ range first .Site.Params.microblog.number (where .Site.RegularPages.ByDate.Reverse "Section" "==" "micro") }}
+            <!-- Article Title -->
+            <h4 class="title">
+              <a href="{{ .Permalink }}">{{ .Title }}</a>
+            </h4>
+        <!-- End loop -->
+        {{ end }}
+    {{ end }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}
