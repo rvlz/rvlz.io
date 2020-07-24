@@ -1,3 +1,3 @@
 # rvlz.io
 
-[visit](https://rvlz.io)
+[visit](http://rvlz.io)

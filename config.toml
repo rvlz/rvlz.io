@@ -1,4 +1,4 @@
-baseURL = "https://rvlz.io"
+baseURL = "http://rvlz.io"
 title = "Ricardo Veloz"
 theme = "m10c"
 paginate = 7
