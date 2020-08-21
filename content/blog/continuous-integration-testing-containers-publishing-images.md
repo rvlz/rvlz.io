@@ -14,7 +14,7 @@ Container Registry. Before getting started make sure you have the following inst
 you machine:
 
 * [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-* [docker](https://docs.docker.com/get-docker/)
+* [Docker](https://docs.docker.com/get-docker/)
 
 Although the docker installation should include Docker Compose, run the following command
 to see if it was installed. The command should return the version.
@@ -24,7 +24,7 @@ $ docker-compose --version
 docker-compose version 1.26.2, build eefe0d31
 ```
 
-Make sure you've also signed up for a [Github account](https://github.com/), a
+Make sure you've also signed up for a [GitHub account](https://github.com/), a
 [Travis CI account](https://travis-ci.org/), and an [AWS account](https://aws.amazon.com/).
 
 ## The Source Code
@@ -163,7 +163,7 @@ else
 fi
 ```
 
-The entire script should look like:
+The entire script should look like this:
 ```
 #!/bin/sh
 
@@ -189,7 +189,7 @@ else
 fi
 ```
 
-Let's run test the script.
+Let's run the test script.
 ```
 $ bash test.sh
 ============================== test session starts ===============================
@@ -202,4 +202,36 @@ app/test/test_ping.py .                                                    [100%
 
 =============================== 2 passed in 0.04s ================================
 TESTS SUCCEEDED
+```
+
+All looks good. Before we commit our new file, create and checkout a new branch called development.
+```
+$ git checkout -b development
+```
+Now let's commit the new file.
+```
+$ git add test.sh
+$ git commit -m 'add API test script'
+```
+
+## Setting Up a Remote Repository
+To test your code on Travis CI, you need to give Travis CI permission to access your source
+code on GitHub. So let's create a remote repository called *docker-ci-demo*. If you need help creating a GitHub repository follow these
+[directions](https://docs.github.com/en/enterprise/2.15/user/articles/create-a-repo).
+
+
+After creating the repository, replace the old remote repository with the newly created repository.
+```
+git remote set-url origin https://github.com/<your-github-username>/docker-ci-demo.git
+```
+
+Next push to the github repository.
+```
+$ git push -u origin development
+```
+
+From now on, as long as you're on the development branch you just need to run the following
+command to push your changes.
+```
+$ git push
 ```
