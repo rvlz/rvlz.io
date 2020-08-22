@@ -19,7 +19,7 @@ installed on your machine:
 Although the docker installation should include Docker Compose, run the following command
 to see if it was installed. The command should return the version.
 
-```
+```bash
 $ docker-compose --version
 docker-compose version 1.26.2, build eefe0d31
 ```
@@ -30,19 +30,19 @@ Make sure you've also signed up for a [GitHub account](https://github.com/) and 
 ## The Source Code
 To get started clone the demo git repository.
 
-```
+```bash
 $ git clone https://github.com/rvlz/docker-ci-guide.git
 ```
 
 Next enter the project directory and check out the *demo* branch.
 
-```
+```bash
 $ cd docker-ci-guide
 $ git checkout demo
 ```
 
 ### Project Structure
-```
+```bash
 .
 ├── README.md
 ├── api
@@ -69,7 +69,7 @@ a single container. In *api*, there's a very simple flask API and, in *nginx*, t
 configuration of a reverse proxy. Nginx will relay all requests with the base path
 */api* to the API, as shown in *dev.conf*:
 
-```
+```bash
 ...
 
   location /api {
@@ -87,7 +87,7 @@ configuration of a reverse proxy. Nginx will relay all requests with the base pa
 
 Flask will then process the request and return a response, using the handler:
 
-```
+```python
 @bp.route("", methods=["GET"])
 def ping():
     return "pong", 200
@@ -101,7 +101,7 @@ Everything's in place to run and test the containers locally.
 ## Running Container Tests
 To build the containers run the following command:
 
-```
+```bash
 $ docker-compose up -d --build
 ```
 
@@ -111,7 +111,7 @@ won't take long to run.
 
 When ready, check that the containers are running.
 
-```
+```bash
 $ docker-compose ps
          Name                      Command            State         Ports       
 --------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ docker-ci-guide_nginx_1   nginx -g daemon off;        Up      0.0.0.0:80->80/tcp
 
 Now run the API tests.
 
-```
+```bash
 $ docker-compose exec api python manage.py test
 ============================== test session starts ===============================
 platform linux -- Python 3.8.2, pytest-6.0.1, py-1.9.0, pluggy-0.13.1
@@ -142,7 +142,7 @@ Since you don't want to type these commands every time you need to run tests,
 you should write a script to speed things up a bit. So open up a file called
 *test.sh* with your favorite text editor and at the beginning of the file write:
 
-```
+```bash
 #!/bin/sh
 ```
 
@@ -151,7 +151,7 @@ This'll tell the operating system to use the Bourne shell to execute *test.sh*.
 Next add a helper function that appends the name of a failed test to a variable called
 *failed_tests*. *failed_tests* will be used to determine the exit code of *test.sh*.
 
-```
+```bash
 failed_tests=""
 
 inspect() {
@@ -163,7 +163,7 @@ inspect() {
  
 Next up are the docker commands you executed above.
 
-```
+```bash
 docker-compose up -d --build
 docker-compose exec api python manage.py test
 inspect $? api
@@ -178,7 +178,7 @@ running containers.
 Finally, add an *if/else* statement to choose the exit code for our script and to output
 the results of the tests.
 
-```
+```bash
 if [[ -n ${failed_tests} ]]; then
   echo "TESTS FAILED: ${failed_tests}"
   exit 1
@@ -190,7 +190,7 @@ fi
 
 That's it for the script, so test it out.
 
-```
+```bash
 $ bash test.sh
 ============================== test session starts ===============================
 platform linux -- Python 3.8.2, pytest-6.0.1, py-1.9.0, pluggy-0.13.1
@@ -205,17 +205,17 @@ TESTS SUCCEEDED
 ```
 
 > If you want to run the script directly—without using *bash*, modify the files
-> ```
+> ```bash
 > chmod +x test.sh
 > ```
 > To run the script, run
-> ```
+> ```bash
 > ./test.sh
 > ```
 
 The entire script should look like this:
 
-```
+```bash
 #!/bin/sh
 
 failed_tests=""
@@ -244,7 +244,7 @@ All looks good. Before committing the script, create and check out a new branch
 called *development*. This can be done in one fell swoop with the `git checkout`
 subcommand, instead of using `git branch development && git checkout development`.
 
-```
+```bash
 $ git checkout -b development
 $ git add test.sh
 $ git commit -m 'add API test script'
@@ -253,7 +253,7 @@ $ git commit -m 'add API test script'
 Since you don't need branches *master* and *demo*, delete them. They just get
 in the way.
 
-```
+```bash
 $ git branch -d master demo
 ```
 
@@ -267,7 +267,7 @@ creating a GitHub repository follow these
 After creating the repository, replace the old remote repository with the newly created GitHub
 repository.
 
-```
+```bash
 git remote set-url origin https://github.com/<your-github-username>/docker-ci-demo.git
 ```
 
@@ -275,14 +275,14 @@ git remote set-url origin https://github.com/<your-github-username>/docker-ci-de
 
 Next push to the GitHub repository.
 
-```
+```bash
 $ git push -u origin development
 ```
 
 From now on, as long as you're on the development branch you just need to run the following
 command to push your changes.
 
-```
+```bash
 $ git push
 ```
 
@@ -301,7 +301,7 @@ Every time you push any changes to the repository, Travis CI will look for a dot
 
 In your project root create .travis.yml and add the following content to it.
 
-```
+```yml
 sudo: required
 
 env:
@@ -331,7 +331,7 @@ at the environment variable *?* and use its value to determine whether the scrip
 success while a nonzero number means failure. Test it out!
 
 Time to commit and push.
-```
+```bash
 $ git add .travis.yml
 $ git commit -m 'add Travis CI configuration'
 $ git push
@@ -344,19 +344,19 @@ First create and check out a new branch called *staging* which you'll use to pub
 images. Whenever you're ready to release a new image, you'll switch to this branch and merge in
 changes from the *development* branch. Then you'll push those changes to GitHub.
 
-```
+```bash
 $ git checkout -b staging
 ```
 
 Then push.
 
-```
+```bash
 $ git push -u origin staging
 ```
 
 Switch back to the *development* branch.
 
-```
+```bash
 $ git checkout development
 ```
 
@@ -365,17 +365,20 @@ To automate image publishing, you'll need a script that runs only when a *stagin
 succeeds, since you don't want to incur costs from frequent *development* branch builds.
 
 Create a file called *docker-push.sh*.
-```
+
+```bash
 $ touch docker-push.sh
 ```
 
 Just like in *test.sh*, at the very top write:
-```
+
+```bash
 #!/bin/sh
 ```
 
 Next add an *if* statement block.
-```
+
+```bash
 if [ "${TRAVIS_BRANCH}" == "staging" ]; then
 
   # code goes here
@@ -391,7 +394,7 @@ to do this you need the AWS CLI to communicate with AWS, but the virtual machine
 run don't have it installed. So you'll have to install it yourself. Inside the *if* statement add the
 lines:
 
-```
+```bash
 curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
 unzip awscli-bundle.zip
 ./awscli-bundle/install -b ~/bin/aws
@@ -402,7 +405,7 @@ Don't worry too much about the details. Just know that these commands install AW
 to the PATH variable.
 
 Next, add the following line.
-```
+```bash
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_REGISTRY}
 ``` 
 
@@ -428,14 +431,14 @@ extra cautious.
 
 Finally, inside the *if/else* block add the commands that build a local image and push it to Amazon ECR.
 
-```
+```bash
 docker build ./api -t ${AWS_REGISTRY}/docker-ci-demo-api:staging -f ./api/Dockerfile
 docker push ${AWS_REGISTRY}/docker-ci-demo-api:staging
 ```
 
 The script should look like this.
 
-```
+```bash
 #!/bin/sh
 
 if [ "${TRAVIS_BRANCH}" == "staging" ]
@@ -468,7 +471,7 @@ To have Travis CI execute *docker-push.sh*, you need to update *.travis.yml*.
 First, define AWS_REGION and AWS_REGISTRY in the *env* section. Be sure to replace
 *\<your-region\>* with the region where you'll host the image repository.
 
-```
+```yml
 env:
   ...
   AWS_REGION: <your-region>
@@ -477,14 +480,14 @@ env:
 
 Then, define a new key called *after_success* and add *docker-push.sh* to it.
 
-```
+```yml
 after_success:
   - docker-push.sh
 ```
 
 .travis.yml should now look like this.
 
-```
+```yml
 sudo: required
 
 env:
@@ -508,7 +511,7 @@ after_success:
 
 Now commit and push all the changes. (make sure you're on the *development* branch)
 
-```
+```bash
 $ git add .
 $ git commit -m 'add docker push script for successful staging builds'
 $ git push
@@ -525,7 +528,7 @@ repository named *docker-ci-demo-api*.
 
 Now switch to the *staging* branch, merge it with the *development* branch, and push.
 
-```
+```bash
 $ git checkout staging
 $ git merge development
 $ git push
