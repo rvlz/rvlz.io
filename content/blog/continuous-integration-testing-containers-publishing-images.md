@@ -9,9 +9,9 @@ tags:
   - "AWS"
 ---
 
-In this guide, we'll use Travis CI to test containers and push images to Amazon Elastic
-Container Registry. Before getting started make sure you have the following installed on
-you machine:
+In this guide, you'll use Travis CI to run tests in containers and push images to Amazon
+Elastic Container Registry (ECR). Before getting started make sure you have the following
+installed on your machine:
 
 * [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [Docker](https://docs.docker.com/get-docker/)
@@ -24,22 +24,24 @@ $ docker-compose --version
 docker-compose version 1.26.2, build eefe0d31
 ```
 
-Make sure you've also signed up for a [GitHub account](https://github.com/), a
-[Travis CI account](https://travis-ci.org/), and an [AWS account](https://aws.amazon.com/).
+Make sure you've also signed up for a [GitHub account](https://github.com/) and an
+[AWS account](https://aws.amazon.com/).
 
 ## The Source Code
-Clone the git repository.
+To get started clone the demo git repository.
+
 ```
 $ git clone https://github.com/rvlz/docker-ci-guide.git
 ```
+
 Next enter the project directory and check out the *demo* branch.
+
 ```
 $ cd docker-ci-guide
 $ git checkout demo
 ```
 
 ### Project Structure
-Let's take a quick look at the project directory.
 ```
 .
 ├── README.md
@@ -61,10 +63,12 @@ Let's take a quick look at the project directory.
     ├── Dockerfile
     └── dev.conf
 ```
+
 The two directories—*api* and *nginx*—in the project root each have source code for
-a single container. In *api*, we have a very simple flask API and, in *nginx*, a reverse
-proxy that relays all requests with the base path */api* to the API, as the server
-block shows in *dev.conf*:
+a single container. In *api*, there's a very simple flask API and, in *nginx*, the
+configuration of a reverse proxy. Nginx will relay all requests with the base path
+*/api* to the API, as shown in *dev.conf*:
+
 ```
 ...
 
@@ -80,18 +84,33 @@ block shows in *dev.conf*:
 
 ...
 ```
-Now let's build the containers.
+
+Flask will then process the request and return a response, using the handler:
+
+```
+@bp.route("", methods=["GET"])
+def ping():
+    return "pong", 200
+```
+
+Yes very simple stuff, but it's enough to demonstrate the Travis CI/Amazon ECR
+continuous integration flow.
+
+Everything's in place to run and test the containers locally.
 
 ## Running Container Tests
 To build the containers run the following command:
+
 ```
 $ docker-compose up -d --build
 ```
+
 If you don't already have the container images, it'll probably take a few minutes to
 complete. But once you've downloaded the images the subsequent Docker Compose commands
 won't take long to run.
 
-Check that the containers are running.
+When ready, check that the containers are running.
+
 ```
 $ docker-compose ps
          Name                      Command            State         Ports       
@@ -101,7 +120,8 @@ docker-ci-guide_api_1     gunicorn -b 0.0.0.0:5000    Up      5000/tcp
 docker-ci-guide_nginx_1   nginx -g daemon off;        Up      0.0.0.0:80->80/tcp
 ```
 
-Now let's run the API tests.
+Now run the API tests.
+
 ```
 $ docker-compose exec api python manage.py test
 ============================== test session starts ===============================
@@ -115,22 +135,22 @@ app/test/test_ping.py .                                                    [100%
 =============================== 2 passed in 0.04s ================================
 ```
 
+Perfect! Time to add a little automation.
+
 ### Test Script
-
-Since we don't want to type out these commands every time we test the API, we should
-write a script to speed things up a bit.
-
-Open up a file called *test.sh* with your favorite text editor. At the top of the file
-write:
+Since you don't want to type these commands every time you need to run tests,
+you should write a script to speed things up a bit. So open up a file called
+*test.sh* with your favorite text editor and at the beginning of the file write:
 
 ```
 #!/bin/sh
 ```
 
-This will tell the operating system to use the Bourne shell to execute *test.sh*.
+This'll tell the operating system to use the Bourne shell to execute *test.sh*.
 
-Next add a helper function that adds the name of a failed test to the variable
-*failed_tests*. We'll use *failed_tests* to determine the exit code of *test.sh*.
+Next add a helper function that appends the name of a failed test to a variable called
+*failed_tests*. *failed_tests* will be used to determine the exit code of *test.sh*.
+
 ```
 failed_tests=""
 
@@ -140,7 +160,9 @@ inspect() {
   fi
 }
 ```
-Now write the following commands:
+ 
+Next up are the docker commands you executed above.
+
 ```
 docker-compose up -d --build
 docker-compose exec api python manage.py test
@@ -148,12 +170,14 @@ inspect $? api
 docker-compose down
 ```
 
-The helper function takes the exit code of the previously executed command and the name of
-the test to add to *failed_tests* when the code is nonzero. Below the function invocation,
-the final command simply stops and removes all running containers.
+The helper function takes the exit code of the previously executed command (in this case,
+the API-tests command) and the name of the test to append to *failed_tests* if the code
+is nonzero. Below the function call, the final command simply stops and removes all
+running containers.
 
 Finally, add an *if/else* statement to choose the exit code for our script and to output
 the results of the tests.
+
 ```
 if [[ -n ${failed_tests} ]]; then
   echo "TESTS FAILED: ${failed_tests}"
@@ -164,33 +188,8 @@ else
 fi
 ```
 
-The entire script should look like this:
-```
-#!/bin/sh
+That's it for the script, so test it out.
 
-failed_tests=""
-
-inspect() {
-  if [ $1 -ne 0 ]; then
-    failed_tests="${failed_tests} $2"
-  fi
-}
-
-docker-compose up -d --build
-docker-compose exec api python manage.py test
-inspect $? api
-docker-compose down
-
-if [[ -n ${failed_tests} ]]; then
-  echo "TESTS FAILED: ${failed_tests}"
-  exit 1
-else
-  echo "TESTS SUCCEEDED"
-  exit 0
-fi
-```
-
-Let's run the test script.
 ```
 $ bash test.sh
 ============================== test session starts ===============================
@@ -205,17 +204,55 @@ app/test/test_ping.py .                                                    [100%
 TESTS SUCCEEDED
 ```
 
-All looks good. Before we commit our new file, create and check out a new branch called development.
+> If you want to run the script directly—without using *bash*, modify the files
+> ```
+> chmod +x test.sh
+> ```
+> To run the script, run
+> ```
+> ./test.sh
+> ```
+
+The entire script should look like this:
+
+```
+#!/bin/sh
+
+failed_tests=""
+
+inspect() {
+  if [ $1 -ne 0 ]; then
+    failed_tests="${failed_tests} $2"
+  fi
+}
+
+docker-compose up -d --build
+docker-compose exec api python manage.py test
+inspect $? api
+docker-compose down
+
+if [[ -n ${failed_tests} ]]; then
+  echo "TESTS FAILED: ${failed_tests}"
+  exit 1
+else
+  echo "TESTS SUCCEEDED"
+  exit 0
+fi
+```
+
+All looks good. Before committing the script, create and check out a new branch
+called *development*. This can be done in one fell swoop with the `git checkout`
+subcommand, instead of using `git branch development && git checkout development`.
+
 ```
 $ git checkout -b development
-```
-Now let's commit the new file.
-```
 $ git add test.sh
 $ git commit -m 'add API test script'
 ```
 
-Since we won't be using the branches *master* and *demo*, we'll delete them.
+Since you don't need branches *master* and *demo*, delete them. They just get
+in the way.
+
 ```
 $ git branch -d master demo
 ```
@@ -229,17 +266,22 @@ creating a GitHub repository follow these
 
 After creating the repository, replace the old remote repository with the newly created GitHub
 repository.
+
 ```
 git remote set-url origin https://github.com/<your-github-username>/docker-ci-demo.git
 ```
 
+> Don't just copy and paste the command. Replace \<your-github-username\> with your username.
+
 Next push to the GitHub repository.
+
 ```
 $ git push -u origin development
 ```
 
 From now on, as long as you're on the development branch you just need to run the following
 command to push your changes.
+
 ```
 $ git push
 ```
@@ -275,16 +317,16 @@ script:
   - bash test.sh
 ```
 
-The first line tells Travis CI to allow the running of commands using elevated permissions by using
-*sudo* before the command. The next key *env* holds an environment variable called
-*DOCKER_COMPOSE_VESRION* whose value Travis CI will insert wherever you reference it in the file. The
-key that comes next may look quite complicate, but all it does is specify a sequence of commands that
-replaces the local Docker Compose version with your own—in this case version 1.25.4. The final tells
-Travis CI to run the script *test.sh*.
+The first line tells Travis CI to allow running commands using elevated permissions with
+*sudo*. The next key *env* holds an environment variable called *DOCKER_COMPOSE_VESRION* whose value
+Travis CI will insert wherever you reference it in the file. The key that comes next may look
+quite complicate, but all it does is specify a sequence of commands that replaces the local Docker
+Compose version with your own—in this case version 1.25.4. The final key tells Travis CI to run
+*test.sh*.
 
-If all tests pass in *test.sh*, Travis CI will highlight the build in green; however, if it fails,
+If all tests in *test.sh* pass, Travis CI will highlight the build in green; however, if it fails,
 Travis CI will use red. But how does Travis CI know whether a build succeeded or not? Remember the
-exit codes in the *if/else* statement in *test.sh*? After running the script, Travis CI will take a look
+exit codes in the *if/else* block of *test.sh*? After running the script, Travis CI will take a look
 at the environment variable *?* and use its value to determine whether the script "passed"—zero means
 success while a nonzero number means failure. Test it out!
 
@@ -295,12 +337,12 @@ $ git commit -m 'add Travis CI configuration'
 $ git push
 ```
 
-Go to Travis CI to see the build status. It'll probably take a minute or two to complete the build.
+Go to Travis CI to see the build status. It'll probably take a minute or two to complete.
 
 # Pushing to AWS Elastic Container Registry
 First create and check out a new branch called *staging* which you'll use to publish new container
 images. Whenever you're ready to release a new image, you'll switch to this branch and merge in
-changes from the development branch. Then you'll push those changes to GitHub.
+changes from the *development* branch. Then you'll push those changes to GitHub.
 
 ```
 $ git checkout -b staging
@@ -344,7 +386,7 @@ fi
 On every build Travis CI provides useful environment variables to customize your build. Here you
 use *TRAVIS_BRANCH* to run the nested code only on *staging* branch builds.
 
-But before you can push to Amazon Elastic Container Registry, you need to log in. Unfortunately,
+But before you can push to Amazon ECR you need to log in. Unfortunately,
 to do this you need the AWS CLI to communicate with AWS, but the virtual machines on which the builds
 run don't have it installed. So you'll have to install it yourself. Inside the *if* statement add the
 lines:
@@ -369,13 +411,13 @@ more: AWS_ACCOUNT_ID, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY. Since these 
 sensitive information, **never** include them in source code.
 
 So how are you supposed to log in? Just let Travis CI inject them for you. Go to your Travis CI
-dashboard and select docker-ci-demo. Click the *more options* button and select *zsettings*.
+dashboard and select docker-ci-demo. Click the *more options* button and select *settings*.
 The dashboard should look something like this.
 
 
 ![Travis CI Repository Settings](/images/travis-ci-settings.png)
 
-In the *Environment Variables* section add your aws information. Make sure that the variable values
+In the *Environment Variables* section add your AWS information. Make sure that the variable values
 aren't included in the build logs and that they are only available in the staging branch—just to be
 extra cautious.
 
@@ -384,8 +426,7 @@ extra cautious.
 >> Remember to create an IAM user with sufficient permissions. Avoid using the root user to create
 >> resources; it should only be used for billing purposes.
 
-Finally, inside the *if/else* block add the commands that build a local image and push it to Amazon
-Elastic Container Registry.
+Finally, inside the *if/else* block add the commands that build a local image and push it to Amazon ECR.
 
 ```
 docker build ./api -t ${AWS_REGISTRY}/docker-ci-demo-api:staging -f ./api/Dockerfile
@@ -414,6 +455,12 @@ then
 fi
 
 ```
+
+> You might be wonder why the script doesn't publish the reverse proxy image. It seems
+> like a pretty important component of the development environment—and it is, but, umless you need
+> a custom solution, AWS offers [load balancers](https://aws.amazon.com/elasticloadbalancing/)
+> that, in conjunction with Amazon Elastic Container Service (ECS), can do a better job handling
+> traffic and routing it to your containers.
 
 ## Updating .travis.yml
 To have Travis CI execute *docker-push.sh*, you need to update *.travis.yml*.
@@ -470,9 +517,9 @@ $ git push
 ## Final Steps
 If you merge in the changes to the *staging* branch and you push, the build will succeed;
 however, your image push will end in failure. Why? Because the *docker-ci-demo-api* repository
-doesn't exist on Amazon Elastic Container Registry! Head back to your AWS Management Console
-and go to the Amazon Elastic Container Registry Console. Click on the *Create repository*
-button and create a repository named *docker-ci-demo-api*.
+doesn't exist on Amazon ECR! Head back to your AWS Management Console and go to the Amazon
+Elastic Container Registry Console. Click on the *Create repository* button and create a
+repository named *docker-ci-demo-api*.
 
 ![Amazon ECR](/images/aws-ecr.png)
 
@@ -489,16 +536,17 @@ Wait a minute; then check the repository on AWS. Voila!
 ![Amazon ECR Repository](/images/aws-ecr-repo.png)
 
 ### Workflow
-To be systemic, follow the steps below.
+To be systematic, follow the steps below.
 
 1. Switch to the *development* branch
 2. Edit the API source code
 3. Commit and push the changes
 4. Switch to the *staging* branch
 5. Merge the *development* branch
-6. Push!
+6. Push
+7. Repeat!
 
 That's it for the tutorial! Try making a change to the source code and push your changes
 to the Amazon Elastic Container Registry.
 
-If you have any questions, suggestions, or concerns, shoot me an email at ricard@rvlz.io.
+If you have any questions, suggestions, or concerns, shoot me an email at ricardo@rvlz.io.
