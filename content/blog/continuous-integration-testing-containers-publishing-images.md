@@ -457,7 +457,7 @@ fi
 ```
 
 > You might be wondering why the script doesn't publish the reverse proxy image. It seems
-> like a pretty important component of the development environment—and it is, but, umless you need
+> like a pretty important component of the development environment—and it is, but, unless you need
 > a custom solution, AWS offers [load balancers](https://aws.amazon.com/elasticloadbalancing/)
 > that, in conjunction with Amazon Elastic Container Service (ECS), can do a better job handling
 > traffic and routing it to your containers.
