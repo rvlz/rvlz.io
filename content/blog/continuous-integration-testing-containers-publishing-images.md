@@ -550,6 +550,6 @@ To be systematic, follow the steps below.
 7. Repeat!
 
 That's it for the tutorial! Try making a change to the source code and push your changes
-to the Amazon Elastic Container Registry.
+to Amazon ECR.
 
 If you have any questions, suggestions, or concerns, shoot me an email at ricardo@rvlz.io.
